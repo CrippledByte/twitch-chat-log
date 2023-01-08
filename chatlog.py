@@ -29,9 +29,9 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
 
         # Set up logger
         self.logger = logging.getLogger('chatlogger')
-        logname = "{}.log".format(channel.replace('#', ''))
-        handler = TimedRotatingFileHandler(logname, when="midnight", interval=1, utc=True)
-        handler.suffix = "%Y-%m-%d_%H-%M-%S%z"
+        logname = "{}.log".format(channel.replace('#', '')) # create file for channel, remove leading '#' from channel name
+        handler = TimedRotatingFileHandler(logname, when="midnight", interval=1, utc=True) # create a new file every day
+        handler.suffix = "%Y-%m-%d_%H-%M-%S%z" # add date and time to filename
         self.logger.addHandler(handler)
 
         # Create IRC bot connection
