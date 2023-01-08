@@ -80,7 +80,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
 
 def main():
     if len(sys.argv) != 5:
-        print("Usage: twitchbot <username> <client id> <token> <channel>")
+        print("Usage: python chatlog.py <username> <oath:token> <channel>")
         sys.exit(1)
 
     username  = sys.argv[1]
