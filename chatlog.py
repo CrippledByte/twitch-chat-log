@@ -1,4 +1,11 @@
 '''
+From: https://github.com/twitchdev/chatbot-python-sample/blob/main/chatbot.py
+
+2021-12-07
+Modified to log Twitch channel chat messages.
+'''
+
+'''
 Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
@@ -10,29 +17,31 @@ or in the "license" file accompanying this file. This file is distributed on an 
 
 import sys
 import irc.bot
-import requests
+import logging
+from logging.handlers import TimedRotatingFileHandler
+
+logging.basicConfig(level=logging.INFO)
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
-    def __init__(self, username, client_id, token, channel):
-        self.client_id = client_id
+    def __init__(self, username, token, channel):
         self.token = token
-        self.channel = '#' + channel
+        self.channel = channel
 
-        # Get the channel id, we will need this for v5 API calls
-        url = 'https://api.twitch.tv/kraken/users?login=' + channel
-        headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-        r = requests.get(url, headers=headers).json()
-        self.channel_id = r['users'][0]['_id']
+        # Set up logger
+        self.logger = logging.getLogger('chatlogger')
+        logname = "{}.log".format(channel.replace('#', ''))
+        handler = TimedRotatingFileHandler(logname, when="midnight", interval=1, utc=True)
+        handler.suffix = "%Y-%m-%d_%H-%M-%S%z"
+        self.logger.addHandler(handler)
 
         # Create IRC bot connection
         server = 'irc.chat.twitch.tv'
         port = 6667
-        print 'Connecting to ' + server + ' on port ' + str(port) + '...'
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port, 'oauth:'+token)], username, username)
-        
+        print('Connecting to ' + server + ' on port ' + str(port) + '...')
+        irc.bot.SingleServerIRCBot.__init__(self, [(server, port, token)], username, username)
 
     def on_welcome(self, c, e):
-        print 'Joining ' + self.channel
+        print('Joining ' + self.channel)
 
         # You must request specific capabilities before you can use them
         c.cap('REQ', ':twitch.tv/membership')
@@ -41,54 +50,18 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
 
     def on_pubmsg(self, c, e):
-
-        # If a chat message starts with an exclamation point, try to run it as a command
-        if e.arguments[0][:1] == '!':
-            cmd = e.arguments[0].split(' ')[0][1:]
-            print 'Received command: ' + cmd
-            self.do_command(e, cmd)
-        return
-
-    def do_command(self, e, cmd):
-        c = self.connection
-
-        # Poll the API to get current game.
-        if cmd == "game":
-            url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
-            headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            c.privmsg(self.channel, r['display_name'] + ' is currently playing ' + r['game'])
-
-        # Poll the API the get the current status of the stream
-        elif cmd == "title":
-            url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
-            headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            c.privmsg(self.channel, r['display_name'] + ' channel title is currently ' + r['status'])
-
-        # Provide basic information to viewers for specific commands
-        elif cmd == "raffle":
-            message = "This is an example bot, replace this text with your raffle text."
-            c.privmsg(self.channel, message)
-        elif cmd == "schedule":
-            message = "This is an example bot, replace this text with your schedule text."            
-            c.privmsg(self.channel, message)
-
-        # The command was not recognized
-        else:
-            c.privmsg(self.channel, "Did not understand command: " + cmd)
+        self.logger.info(e) # log events to file
 
 def main():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 4:
         print("Usage: python chatlog.py <username> <oath:token> <channel>")
         sys.exit(1)
 
-    username  = sys.argv[1]
-    client_id = sys.argv[2]
-    token     = sys.argv[3]
-    channel   = sys.argv[4]
+    username    = sys.argv[1]
+    token       = sys.argv[2] # 'oath:token'
+    channel     = '#' + sys.argv[3]
 
-    bot = TwitchBot(username, client_id, token, channel)
+    bot = TwitchBot(username, token, channel)
     bot.start()
 
 if __name__ == "__main__":
