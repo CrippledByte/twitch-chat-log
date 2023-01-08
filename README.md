@@ -28,3 +28,5 @@ $ python chatlog.py <username> <oath:token> <channel>
 * Username - The username of the chatbot
 * Token - Your OAuth Token
 * Channel - The channel your bot will connect to
+
+When this script is running, messages are stored in files with the format `channelname.log.2023-01-01_00-00-00+0000`. A new file will be created at midnight UTC every day.
