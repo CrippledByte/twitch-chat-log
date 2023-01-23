@@ -52,6 +52,10 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
     def on_pubmsg(self, c, e):
         self.logger.info(e) # log events to file
 
+    def on_action(self, c, e):
+        # /me
+        self.logger.info(e)
+
 def main():
     if len(sys.argv) != 4:
         print("Usage: python chatlog.py <username> <oath:token> <channel>")
