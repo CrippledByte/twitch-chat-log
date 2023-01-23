@@ -56,6 +56,12 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         # /me
         self.logger.info(e)
 
+    def on_clearchat(self, c, e):
+        # /clear
+        # /timeout
+        # /ban
+        self.logger.info(e)
+
 def main():
     if len(sys.argv) != 4:
         print("Usage: python chatlog.py <username> <oath:token> <channel>")
